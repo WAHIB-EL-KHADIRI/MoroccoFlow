@@ -1,0 +1,35 @@
+{
+  "name": "@moroccoflow/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Production API for MoroccoFlow",
+  "scripts": {
+    "dev": "node --env-file-if-exists=../.env --watch src/server.js",
+    "start": "node --env-file-if-exists=../.env src/server.js",
+    "migrate": "node --env-file-if-exists=../.env scripts/migrate.js",
+    "test": "vitest run",
+    "lint": "eslint ."
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1090.0",
+    "@fastify/cookie": "11.1.2",
+    "@fastify/cors": "11.3.0",
+    "@fastify/helmet": "13.1.0",
+    "@fastify/jwt": "10.2.0",
+    "@fastify/multipart": "10.1.0",
+    "@fastify/postgres": "6.1.0",
+    "@fastify/rate-limit": "11.1.0",
+    "@fastify/swagger": "9.8.1",
+    "@fastify/swagger-ui": "6.1.0",
+    "@fastify/under-pressure": "9.1.0",
+    "argon2": "0.45.0",
+    "fastify": "5.10.0",
+    "ioredis": "5.11.1",
+    "pg": "8.22.0",
+    "prom-client": "15.1.3"
+  }
+}

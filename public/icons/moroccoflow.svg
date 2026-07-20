@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="MoroccoFlow">
+  <rect width="512" height="512" rx="120" fill="#0d6b5c"/>
+  <path d="M112 332c45-2 61-64 104-64 46 0 45 79 92 79 42 0 47-52 92-55" fill="none" stroke="#f8c65c" stroke-width="42" stroke-linecap="round"/>
+  <path d="M112 226c42 0 55-61 100-61 46 0 55 76 98 76 36 0 51-36 90-40" fill="none" stroke="#fff" stroke-opacity=".94" stroke-width="42" stroke-linecap="round"/>
+</svg>

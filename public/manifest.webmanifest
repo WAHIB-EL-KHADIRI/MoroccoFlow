@@ -1,0 +1,33 @@
+{
+  "id": "./",
+  "name": "MoroccoFlow",
+  "short_name": "MoroccoFlow",
+  "description": "Modern local-first business management for Moroccan companies.",
+  "lang": "fr",
+  "dir": "auto",
+  "start_url": "./#/dashboard",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5f7f4",
+  "theme_color": "#0d6b5c",
+  "categories": ["business", "productivity", "finance"],
+  "icons": [
+    {
+      "src": "icons/moroccoflow.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "./#/dashboard"
+    },
+    {
+      "name": "New invoice",
+      "url": "./#/finance?action=new-invoice"
+    }
+  ]
+}

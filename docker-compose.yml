@@ -1,0 +1,142 @@
+name: moroccoflow
+
+services:
+  postgres:
+    image: postgres:18.4-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: moroccoflow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d moroccoflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [data]
+
+  redis:
+    image: redis:8.8.0-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --appendfsync
+      - everysec
+      - --user
+      - default
+      - "off"
+      - --user
+      - moroccoflow
+      - "on"
+      - ">${REDIS_PASSWORD}"
+      - "~*"
+      - "+@all"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", 'redis-cli --user moroccoflow --pass "$$REDIS_PASSWORD" ping | grep PONG']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [data]
+
+  s3:
+    image: chrislusf/seaweedfs:4.29
+    restart: unless-stopped
+    command: ["server", "-s3", "-dir=/data", "-ip=s3", "-s3.port=8333"]
+    volumes:
+      - object_data:/data
+    networks: [data]
+
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/moroccoflow
+      JWT_SECRET: ${JWT_SECRET}
+      COOKIE_SECRET: ${COOKIE_SECRET}
+      BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN}
+      REDIS_URL: redis://moroccoflow:${REDIS_PASSWORD}@redis:6379
+      S3_ENDPOINT: http://s3:8333
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_BUCKET: moroccoflow-documents
+      FILE_SCAN_TOKEN: ${FILE_SCAN_TOKEN}
+      MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY}
+    command: ["node", "backend/scripts/migrate.js"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    networks: [data]
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/moroccoflow
+      DATABASE_ROLE: moroccoflow_app
+      REDIS_URL: redis://moroccoflow:${REDIS_PASSWORD}@redis:6379
+      JWT_SECRET: ${JWT_SECRET}
+      COOKIE_SECRET: ${COOKIE_SECRET}
+      BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-172.16.0.0/12}
+      DOCS_ENABLED: ${DOCS_ENABLED:-true}
+      METRICS_TOKEN: ${METRICS_TOKEN}
+      S3_ENDPOINT: http://s3:8333
+      S3_REGION: eu-west-3
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+      S3_BUCKET: moroccoflow-documents
+      S3_FORCE_PATH_STYLE: "true"
+      S3_SERVER_SIDE_ENCRYPTION: ${S3_SERVER_SIDE_ENCRYPTION:-}
+      FILE_SCAN_TOKEN: ${FILE_SCAN_TOKEN}
+      MFA_ENCRYPTION_KEY: ${MFA_ENCRYPTION_KEY}
+      FILE_SCANNING_REQUIRED: ${FILE_SCANNING_REQUIRED:-true}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      s3:
+        condition: service_started
+    networks: [app, data]
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BASE_PATH: /
+        VITE_API_BASE_URL: /api/v1
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [app]
+
+networks:
+  app:
+  data:
+    internal: true
+
+volumes:
+  postgres_data:
+  redis_data:
+  object_data:
