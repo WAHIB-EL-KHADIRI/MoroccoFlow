@@ -35,8 +35,12 @@ suite("PostgreSQL tenant isolation", () => {
   });
 
   afterAll(async () => {
-    await pool.query("DELETE FROM tenants WHERE id IN ($1, $2)", [tenantA, tenantB]);
-    await pool.end();
+    try {
+      await pool.query("DELETE FROM audit_logs WHERE tenant_id IN ($1, $2)", [tenantA, tenantB]);
+      await pool.query("DELETE FROM tenants WHERE id IN ($1, $2)", [tenantA, tenantB]);
+    } finally {
+      await pool.end();
+    }
   });
 
   async function tenantTransaction(tenantId, userId, operation) {
