@@ -16,6 +16,12 @@ concurrency:
 
 jobs:
   deploy:
+    # GitHub Pages is unavailable for private repositories on the free plan, so
+    # configure-pages fails with "Get Pages site failed" on every push while this
+    # repository is private. Skip the job instead of failing it: a red run on every
+    # push is noise that trains you to ignore CI. This turns itself back on the
+    # moment the repository is public again, with no edit needed.
+    if: ${{ !github.event.repository.private }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
