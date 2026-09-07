@@ -78,6 +78,18 @@ function publicError(error, request) {
       },
     };
   }
+  if (error.code === "FST_UNDER_PRESSURE") {
+    return {
+      statusCode: 503,
+      payload: {
+        error: {
+          code: "SERVICE_UNAVAILABLE",
+          message: "The service is temporarily overloaded. Retry shortly.",
+          requestId: request.id,
+        },
+      },
+    };
+  }
   return {
     statusCode: 500,
     payload: {
@@ -158,7 +170,16 @@ export async function buildApp(options = {}) {
     await app.register(fastifySwaggerUi, { routePrefix: "/documentation" });
   }
 
-  app.get("/health/live", { schema: { hide: true } }, async () => ({ status: "ok" }));
+  // Liveness answers "is this process alive", never "is it busy". Leaving it
+  // behind under-pressure means a merely-loaded process reports itself dead, and
+  // an orchestrator then restarts it at exactly the moment it is busiest. The
+  // empty pressureHandler is under-pressure's own per-route opt-out: returning
+  // nothing lets the request through. Load belongs on readiness, not liveness.
+  app.get(
+    "/health/live",
+    { schema: { hide: true }, config: { pressureHandler: () => undefined } },
+    async () => ({ status: "ok" }),
+  );
 
   if (infrastructure) {
     await databasePlugin(app, { config });
