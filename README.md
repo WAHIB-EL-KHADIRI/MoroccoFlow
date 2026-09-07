@@ -1,7 +1,21 @@
 # MoroccoFlow
 
-**Business, in flow.** An original, bilingual business-management platform for Moroccan companies,
+**Business, in flow.** A bilingual business-management platform for Moroccan companies,
 designed and engineered by **WAHIB EL KHADIRI**.
+
+## The problem
+
+A small Moroccan company running on spreadsheets keeps the same four facts in four different
+places: who the customer is, what was quoted, what was invoiced, and what was actually paid.
+Keeping those four in agreement is manual work, and most software that would fix it assumes one
+language, one currency, and a connection that never drops.
+
+MoroccoFlow is one system for that workflow. CRM, quotes, invoices and expenses in dirhams, in
+French and Arabic, with the interface mirrored for RTL rather than merely translated. It keeps
+working offline and reconciles when the connection returns.
+
+This is a reference implementation, not a product with customers. Every company and person in the
+demo data is fictional.
 
 [![Quality](https://github.com/WAHIB-EL-KHADIRI/MoroccoFlow-/actions/workflows/ci.yml/badge.svg)](https://github.com/WAHIB-EL-KHADIRI/MoroccoFlow-/actions/workflows/ci.yml)
 
@@ -17,7 +31,7 @@ designed and engineered by **WAHIB EL KHADIRI**.
 - French and Arabic, RTL/LTR, light/dark themes and responsive layouts
 - IndexedDB offline cache, mutation outbox, Service Worker and installable PWA
 - Rotating sessions, account lockout, Argon2id passwords and TOTP MFA
-- S3-compatible documents with content validation and malware quarantine
+- S3-compatible documents with content validation and a scan-gated quarantine workflow
 
 All demo companies and people are fictional. Demo financial values intentionally display `0 dh`.
 No template or third-party product source code was copied.
@@ -111,5 +125,27 @@ portfolio mode. Company mode requires a separate API deployment and managed serv
 | Dashboard                                          | Accessible Kanban                      | Arabic mobile / dark                                      |
 | -------------------------------------------------- | -------------------------------------- | --------------------------------------------------------- |
 | ![Dashboard](docs/screenshots/dashboard-light.png) | ![Kanban](docs/screenshots/kanban.png) | ![Arabic mobile](docs/screenshots/mobile-arabic-dark.png) |
+
+## Scope and limitations
+
+- Uploads are held at `scan_status: pending` and refused on download until a scanner reports them
+  clean, through the internal `/internal/files/scan-result` endpoint. The scanner itself is not
+  part of this repository; the gate and its integration point are.
+- Invoices and quotes are generated as documents. No claim is made about conformance with
+  Moroccan invoicing, accounting or tax regulation; that requires validation by a qualified
+  accountant before any real-world use.
+- Company mode has not been run against production traffic.
+
+## Author
+
+Built by **Wahib El Khadiri** — full-stack and systems engineer, Morocco.
+
+[GitHub](https://github.com/WAHIB-EL-KHADIRI) ·
+[LinkedIn](https://www.linkedin.com/in/wahib-el-khadiri-a54134283) ·
+[wahibelkhadiri06@gmail.com](mailto:wahibelkhadiri06@gmail.com)
+
+Open to work on production web systems and business software. If you are evaluating this
+repository, [docs/architecture.md](docs/architecture.md) is the fastest way to see how it fits
+together.
 
 © 2026 WAHIB EL KHADIRI.
