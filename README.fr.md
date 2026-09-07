@@ -3,7 +3,7 @@
 **Business, in flow.** Une plateforme de gestion bilingue et originale destinée aux entreprises
 marocaines, conçue et développée par **WAHIB EL KHADIRI**.
 
-[![Quality](https://github.com/WAHIB-EL-KHADIRI/MoroccoFlow-/actions/workflows/ci.yml/badge.svg)](https://github.com/WAHIB-EL-KHADIRI/MoroccoFlow-/actions/workflows/ci.yml)
+[![Quality](https://github.com/WAHIB-EL-KHADIRI/MoroccoFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/WAHIB-EL-KHADIRI/MoroccoFlow/actions/workflows/ci.yml)
 
 ![Tableau de bord MoroccoFlow](docs/screenshots/dashboard-light.png)
 
