@@ -17,9 +17,12 @@ working offline and reconciles when the connection returns.
 This is a reference implementation, not a product with customers. Every company and person in the
 demo data is fictional.
 
-[![Quality](https://github.com/WAHIB-EL-KHADIRI/MoroccoFlow-/actions/workflows/ci.yml/badge.svg)](https://github.com/WAHIB-EL-KHADIRI/MoroccoFlow-/actions/workflows/ci.yml)
+[![Quality](https://github.com/WAHIB-EL-KHADIRI/MoroccoFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/WAHIB-EL-KHADIRI/MoroccoFlow/actions/workflows/ci.yml)
 
 ![MoroccoFlow dashboard](docs/screenshots/dashboard-light.png)
+
+**[Live demo](https://wahib-el-khadiri.github.io/MoroccoFlow/)** — portfolio mode, no sign-up, seeded with
+fictional data. Switch language and direction from the header to see the Arabic RTL layout.
 
 ## What it includes
 
