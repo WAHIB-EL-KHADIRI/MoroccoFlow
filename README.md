@@ -17,12 +17,11 @@ working offline and reconciles when the connection returns.
 This is a reference implementation, not a product with customers. Every company and person in the
 demo data is fictional.
 
-[![Quality](https://github.com/WAHIB-EL-KHADIRI/MoroccoFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/WAHIB-EL-KHADIRI/MoroccoFlow/actions/workflows/ci.yml)
-
 ![MoroccoFlow dashboard](docs/screenshots/dashboard-light.png)
 
-**[Live demo](https://wahib-el-khadiri.github.io/MoroccoFlow/)** — portfolio mode, no sign-up, seeded with
-fictional data. Switch language and direction from the header to see the Arabic RTL layout.
+There is no hosted demo while this repository is private. Portfolio mode runs locally with no
+server and no sign-up — see [Quick start](#quick-start-portfolio-mode). It seeds fictional data,
+and language and direction switch from the header, so the Arabic RTL layout is reachable there.
 
 ## What it includes
 
@@ -121,7 +120,8 @@ mobile audit reports **Performance 95, Accessibility 100 and Best Practices 100*
 
 The quality workflow runs dependency audit, checksummed migrations, PostgreSQL RLS integration
 tests, unit/integration tests, production build and Playwright/axe. The Pages workflow publishes
-portfolio mode. Company mode requires a separate API deployment and managed service credentials.
+portfolio mode whenever the repository is public. Company mode requires a separate API deployment
+and managed service credentials.
 
 ## Screens
 
