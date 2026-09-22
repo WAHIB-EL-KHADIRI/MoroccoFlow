@@ -36,6 +36,20 @@ function checkOrigin(request, config) {
   }
 }
 
+/**
+ * Every access token the API issues is signed here.
+ *
+ * `sub` belongs in the payload, not in a per-call options object: since
+ * @fastify/jwt 10 a second argument *replaces* the signing options configured
+ * on the plugin instead of merging into them. Passing `{ sub: userId }` there
+ * silently downgraded the token to HS256 and dropped `iss`, `aud` and `exp`, so
+ * the verifier -- which demands HS512 and both claims -- rejected every token
+ * that login had just issued, and the token it issued never expired.
+ */
+export function signAccessToken(app, { userId, tenantId, role, sessionId }) {
+  return app.jwt.sign({ sub: userId, tenantId, role, sessionId });
+}
+
 async function createSession(app, client, auth, request) {
   const sessionId = randomUUID();
   const refreshToken = createOpaqueToken();
@@ -55,10 +69,12 @@ async function createSession(app, client, auth, request) {
       expiresAt,
     ],
   );
-  const accessToken = app.jwt.sign(
-    { tenantId: auth.tenantId, role: auth.role, sessionId },
-    { sub: auth.userId },
-  );
+  const accessToken = signAccessToken(app, {
+    userId: auth.userId,
+    tenantId: auth.tenantId,
+    role: auth.role,
+    sessionId,
+  });
   return { accessToken, refreshToken, expiresAt, sessionId };
 }
 
