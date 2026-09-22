@@ -1,0 +1,74 @@
+MoroccoFlow — Proprietary Software License
+Copyright (c) 2026 Wahib El Khadiri. All rights reserved.
+
+This software and its source code, design, documentation, database schemas,
+user interface, and all accompanying materials (collectively, the "Software")
+are the exclusive property of Wahib El Khadiri (the "Author") and are protected
+by Moroccan Law No. 2-00 on Copyright and Related Rights, as amended by Law
+No. 34-05, and by international copyright treaties including the Berne
+Convention.
+
+NO LICENSE IS GRANTED.
+
+This is not open-source software. Publication of this source code, whether in a
+public repository or otherwise, does not place it in the public domain, does not
+constitute a licence, and does not waive any right. Viewing the Software does not
+grant permission to use it.
+
+Without the Author's prior express written permission, no person or entity may:
+
+  (a) copy, reproduce, or redistribute the Software, in whole or in part;
+  (b) modify, adapt, translate, or create derivative works from it;
+  (c) use it, or any part of it, in any product or service, commercial or
+      otherwise, whether or not that product is distributed;
+  (d) train, fine-tune, or evaluate any machine-learning or artificial-
+      intelligence system on it, or include it in any dataset used for that
+      purpose;
+  (e) sublicense, sell, rent, lease, or otherwise transfer any interest in it;
+  (f) remove, obscure, or alter this notice or any copyright notice it contains.
+
+PERMITTED, WITHOUT FURTHER PERMISSION
+
+Reading the source code for personal evaluation — for example by a prospective
+employer, client, or collaborator to whom access has been granted — is permitted.
+That permission extends to reading only, and to nothing in the list above.
+
+Quoting short excerpts for commentary, review, teaching, or journalism is
+permitted where applicable law provides for it, provided the Author is credited.
+
+TRADE MARKS
+
+"MoroccoFlow", the MoroccoFlow name and its logo are trade marks of the Author.
+No right to use them is granted by this licence, including in any derivative or
+competing product.
+
+NO WARRANTY
+
+The Software is provided "as is", without warranty of any kind, express or
+implied, including but not limited to the warranties of merchantability, fitness
+for a particular purpose, and non-infringement. In no event shall the Author be
+liable for any claim, damages, or other liability, whether in an action of
+contract, tort, or otherwise, arising from, out of, or in connection with the
+Software or its use.
+
+The Software is a reference implementation. All companies, persons, and financial
+figures in its demonstration data are fictional.
+
+COMMERCIAL LICENSING
+
+Commercial use, redistribution, and partnership enquiries: contact the Author.
+
+GOVERNING LAW
+
+This licence is governed by the laws of the Kingdom of Morocco. Any dispute
+arising from it falls under the exclusive jurisdiction of the competent Moroccan
+courts.
+
+---
+
+Ce logiciel est protégé par le droit d'auteur. Aucune licence n'est accordée.
+Toute reproduction, modification ou utilisation sans l'autorisation écrite
+préalable de l'auteur est interdite. La publication du code source ne constitue
+ni une licence ni une renonciation à un droit quelconque.
+
+Contact : Wahib El Khadiri

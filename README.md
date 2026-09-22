@@ -151,4 +151,16 @@ Open to work on production web systems and business software. If you are evaluat
 repository, [docs/architecture.md](docs/architecture.md) is the fastest way to see how it fits
 together.
 
-© 2026 WAHIB EL KHADIRI.
+
+## Licence
+
+© 2026 Wahib El Khadiri. All rights reserved.
+
+**This is not open-source software.** It is published for evaluation, and publishing it grants
+no licence: copying, modifying, redistributing, using it in another product, or training a
+machine-learning system on it all require prior written permission. Reading the source to
+evaluate the work is welcome and needs no permission. "MoroccoFlow" and its logo are trade
+marks of the author.
+
+Full terms in [LICENSE](LICENSE). Commercial licensing and partnership enquiries are welcome —
+contact details above.
