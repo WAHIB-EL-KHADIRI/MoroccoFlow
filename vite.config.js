@@ -5,7 +5,13 @@ export default defineConfig({
   build: {
     target: "baseline-widely-available",
     cssCodeSplit: true,
-    sourcemap: true,
+    // "hidden" still emits the maps, so a stack trace can be symbolicated by
+    // uploading them to an error tracker, but drops the //# sourceMappingURL
+    // comment from the bundles. Without that comment a visitor's devtools will
+    // not fetch them, and the original source is not handed to everyone who
+    // opens the deployed site -- which `true` does, and which would make the
+    // licence a formality. Do not ship the .map files themselves.
+    sourcemap: "hidden",
     reportCompressedSize: true,
   },
   server: {
