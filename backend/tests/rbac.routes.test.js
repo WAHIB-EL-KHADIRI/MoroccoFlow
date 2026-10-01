@@ -24,6 +24,8 @@ import { fileRoutes } from "../src/modules/files/routes.js";
 import { insightRoutes } from "../src/modules/insights/routes.js";
 import { resourceRoutes } from "../src/modules/resources/routes.js";
 import { teamRoutes } from "../src/modules/team/routes.js";
+import { paymentRoutes } from "../src/modules/payments/routes.js";
+import { quoteRoutes } from "../src/modules/quotes/routes.js";
 
 /** Any handler that reaches the data layer answers with this status. */
 const HANDLER_REACHED = 599;
@@ -72,6 +74,10 @@ const fixtures = {
   },
   "PATCH /api/v1/quotes/:id": { body: { version: 1, status: "sent" } },
   "DELETE /api/v1/quotes/:id": { query: "version=1" },
+  "POST /api/v1/quotes/:id/accept": { body: { dueDate: "2026-02-05" } },
+  "POST /api/v1/payment-obligations/:id/payments": {
+    body: { amountCents: 100, paidOn: "2026-01-05" },
+  },
   "POST /api/v1/invoices": {
     body: {
       clientId: TARGET,
@@ -148,6 +154,8 @@ beforeAll(async () => {
   await app.register(teamRoutes, { prefix: "/api/v1" });
   await app.register(insightRoutes, { prefix: "/api/v1" });
   await app.register(fileRoutes, { prefix: "/api/v1" });
+  await app.register(quoteRoutes, { prefix: "/api/v1" });
+  await app.register(paymentRoutes, { prefix: "/api/v1" });
   await app.ready();
 
   // Booting the auth module runs an Argon2 hash, which blocks the event loop
@@ -238,6 +246,16 @@ describe("role enforcement at the API, not at the button", () => {
     {
       key: "DELETE /api/v1/invoices/:id",
       allow: ["finance"],
+      deny: ["sales", "project_manager", "hr"],
+    },
+    {
+      key: "POST /api/v1/quotes/:id/accept",
+      allow: ["owner", "admin", "finance", "sales"],
+      deny: ["project_manager", "hr"],
+    },
+    {
+      key: "POST /api/v1/payment-obligations/:id/payments",
+      allow: ["owner", "admin", "finance"],
       deny: ["sales", "project_manager", "hr"],
     },
     {

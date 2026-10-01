@@ -20,6 +20,8 @@ import { authRoutes } from "./modules/auth/routes.js";
 import { fileRoutes } from "./modules/files/routes.js";
 import { insightRoutes } from "./modules/insights/routes.js";
 import { resourceRoutes } from "./modules/resources/routes.js";
+import { paymentRoutes } from "./modules/payments/routes.js";
+import { quoteRoutes } from "./modules/quotes/routes.js";
 import { teamRoutes } from "./modules/team/routes.js";
 
 function corsOrigin(config) {
@@ -227,6 +229,8 @@ export async function buildApp(options = {}) {
     await app.register(teamRoutes, { prefix: "/api/v1" });
     await app.register(insightRoutes, { prefix: "/api/v1" });
     await app.register(fileRoutes, { prefix: "/api/v1" });
+    await app.register(quoteRoutes, { prefix: "/api/v1" });
+    await app.register(paymentRoutes, { prefix: "/api/v1" });
   }
 
   app.setNotFoundHandler((request, reply) =>

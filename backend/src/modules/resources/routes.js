@@ -1,4 +1,10 @@
 import { registerCrudRoutes } from "../../lib/crud.js";
+import {
+  assertQuoteDeletable,
+  assertQuoteUpdate,
+  CREATABLE_QUOTE_STATUSES,
+  WRITABLE_QUOTE_STATUSES,
+} from "../quotes/lifecycle.js";
 
 const nullableString = (maxLength) => ({
   anyOf: [{ type: "string", maxLength }, { type: "null" }],
@@ -151,7 +157,18 @@ export async function resourceRoutes(app) {
       currency: "currency",
       notes: "notes",
     },
-    properties: { ...documentProperties, validUntil: nullableDate },
+    properties: {
+      ...documentProperties,
+      status: { type: "string", enum: WRITABLE_QUOTE_STATUSES },
+      validUntil: nullableDate,
+    },
+    createProperties: {
+      ...documentProperties,
+      status: { type: "string", enum: CREATABLE_QUOTE_STATUSES },
+      validUntil: nullableDate,
+    },
+    guardUpdate: assertQuoteUpdate,
+    guardDelete: assertQuoteDeletable,
   });
 
   registerCrudRoutes(app, {
