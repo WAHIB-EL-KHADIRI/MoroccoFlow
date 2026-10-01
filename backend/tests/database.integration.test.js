@@ -104,4 +104,55 @@ suite("PostgreSQL tenant isolation", () => {
       ),
     ).rejects.toMatchObject({ code: "42501" });
   });
+
+  it("lets a company link its own records", async () => {
+    const project = await tenantTransaction(tenantA, userA, (client) =>
+      client.query(
+        `INSERT INTO projects (tenant_id, client_id, owner_user_id, name)
+         VALUES ($1, $2, $3, 'Own project') RETURNING id`,
+        [tenantA, clientId, userA],
+      ),
+    );
+    expect(project.rowCount).toBe(1);
+  });
+
+  it("refuses a link to another company's record, even by a known id", async () => {
+    // RLS hides tenant A's client from B, but foreign-key checks run without row
+    // security: only a tenant-scoped key stops B from storing a pointer to it.
+    await expect(
+      tenantTransaction(tenantB, userB, (client) =>
+        client.query(
+          "INSERT INTO projects (tenant_id, client_id, name) VALUES ($1, $2, 'Hijack')",
+          [tenantB, clientId],
+        ),
+      ),
+    ).rejects.toMatchObject({ code: "23503" });
+    await expect(
+      tenantTransaction(tenantB, userB, (client) =>
+        client.query(
+          "INSERT INTO clients (tenant_id, name, company, created_by) VALUES ($1, 'X', 'X', $2)",
+          [tenantB, userA],
+        ),
+      ),
+    ).rejects.toMatchObject({ code: "23503" });
+  });
+
+  it("scopes every foreign key between business tables by tenant", async () => {
+    // A new table or column that forgets tenant_id in its foreign key fails here,
+    // instead of silently reopening the cross-tenant reference.
+    const result = await pool.query(`
+      SELECT con.conrelid::regclass::text AS child, con.conname
+      FROM pg_constraint con
+      WHERE con.contype = 'f'
+        AND con.connamespace = 'public'::regnamespace
+        AND con.confrelid <> 'tenants'::regclass
+        AND EXISTS (SELECT 1 FROM pg_attribute a
+                    WHERE a.attrelid = con.confrelid AND a.attname = 'tenant_id')
+        AND NOT EXISTS (
+          SELECT 1 FROM unnest(con.conkey) AS k(attnum)
+          JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = k.attnum
+          WHERE a.attname = 'tenant_id')
+      ORDER BY 1, 2`);
+    expect(result.rows).toEqual([]);
+  });
 });
