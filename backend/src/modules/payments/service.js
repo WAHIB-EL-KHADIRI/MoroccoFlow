@@ -9,20 +9,16 @@ export const PAYMENT_METHODS = ["transfer", "cash", "cheque", "card", "other"];
  * the total paid can never exceed what is owed.
  */
 export async function recordPayment(client, auth, input, audit) {
-  const locked = await client.query(
-    "SELECT id FROM payment_obligations WHERE id = $1 FOR UPDATE",
-    [input.obligationId],
-  );
+  const locked = await client.query("SELECT id FROM payment_obligations WHERE id = $1 FOR UPDATE", [
+    input.obligationId,
+  ]);
   if (!locked.rowCount) throw notFound("Payment obligation");
 
   const before = await balance(client, input.obligationId);
   if (BigInt(input.amountCents) > BigInt(before.remaining_cents)) {
-    throw new AppError(
-      "OVERPAYMENT",
-      "The payment is larger than the remaining balance",
-      409,
-      { remainingCents: Number(before.remaining_cents) },
-    );
+    throw new AppError("OVERPAYMENT", "The payment is larger than the remaining balance", 409, {
+      remainingCents: Number(before.remaining_cents),
+    });
   }
 
   const payment = await client.query(

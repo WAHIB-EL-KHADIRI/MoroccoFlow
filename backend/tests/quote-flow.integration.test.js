@@ -70,10 +70,12 @@ suite("quote to payment flow on PostgreSQL", () => {
     api(who, "POST", `/quotes/${quoteId}/accept`, body, headers);
 
   beforeAll(async () => {
-    await pool.query(
-      `INSERT INTO tenants (id, slug, name) VALUES ($1, $2, 'A'), ($3, $4, 'B')`,
-      [tenantA, `qa-${tenantA.slice(0, 8)}`, tenantB, `qb-${tenantB.slice(0, 8)}`],
-    );
+    await pool.query(`INSERT INTO tenants (id, slug, name) VALUES ($1, $2, 'A'), ($3, $4, 'B')`, [
+      tenantA,
+      `qa-${tenantA.slice(0, 8)}`,
+      tenantB,
+      `qb-${tenantB.slice(0, 8)}`,
+    ]);
     const roles = { ownerA: "owner", salesA: "sales", financeA: "finance", pmA: "project_manager" };
     for (const [key, role] of Object.entries(roles)) {
       await pool.query(
@@ -223,6 +225,9 @@ suite("quote to payment flow on PostgreSQL", () => {
         clientId: clientA,
         amountCents: "2000000",
       });
+      // A calendar date leaves the API as the same calendar date, whatever the
+      // server's own timezone (this used to come back as the previous day east of UTC).
+      expect(obligation.dueDate).toBe("2026-12-31");
       const due = await pool.query(
         "SELECT due_date::text AS due FROM payment_obligations WHERE id = $1",
         [obligation.id],
@@ -318,7 +323,11 @@ suite("quote to payment flow on PostgreSQL", () => {
         notes: "trop tard",
       });
       expect(patch.json().error.code).toBe("QUOTE_LOCKED");
-      const remove = await api("salesA", "DELETE", `/quotes/${quote.id}?version=${current.version}`);
+      const remove = await api(
+        "salesA",
+        "DELETE",
+        `/quotes/${quote.id}?version=${current.version}`,
+      );
       expect(remove.json().error.code).toBe("QUOTE_LOCKED");
     });
 
@@ -333,9 +342,7 @@ suite("quote to payment flow on PostgreSQL", () => {
         version: rejected.version,
         status: "rejected",
       });
-      expect((await accept("salesA", rejected.id)).json().error.code).toBe(
-        "QUOTE_NOT_ACCEPTABLE",
-      );
+      expect((await accept("salesA", rejected.id)).json().error.code).toBe("QUOTE_NOT_ACCEPTABLE");
 
       const empty = await createQuote("salesA", { subtotalCents: 0, taxCents: 0 });
       expect((await accept("salesA", empty.id)).statusCode).toBe(422);
@@ -366,7 +373,8 @@ suite("quote to payment flow on PostgreSQL", () => {
         paidOn: "2026-10-01",
         method: "transfer",
       });
-    const read = async (id) => (await api("financeA", "GET", `/payment-obligations/${id}`)).json().data;
+    const read = async (id) =>
+      (await api("financeA", "GET", `/payment-obligations/${id}`)).json().data;
 
     it("tracks unpaid, partial and paid with exact centimes", async () => {
       const id = await acceptedObligation();

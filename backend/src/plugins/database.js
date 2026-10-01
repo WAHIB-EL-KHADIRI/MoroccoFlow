@@ -1,4 +1,10 @@
 import fastifyPostgres from "@fastify/postgres";
+import pg from "pg";
+
+// A DATE column is a calendar day, not an instant. pg's default parser turns it into
+// a Date at the server's local midnight, which serialises as the previous day on any
+// host east of UTC. Keep it as the "YYYY-MM-DD" string PostgreSQL sent.
+pg.types.setTypeParser(pg.types.builtins.DATE, (value) => value);
 
 function quoteIdentifier(value) {
   if (!/^[a-z_][a-z0-9_]*$/i.test(value)) throw new Error("Invalid DATABASE_ROLE");
