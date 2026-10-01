@@ -3,6 +3,7 @@ import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { AppError, notFound } from "../../lib/errors.js";
 import { safeTokenEqual } from "../../lib/crypto.js";
 import { toPublicJson } from "../../lib/serialize.js";
+import { respondAfterCommit } from "../../lib/crud.js";
 
 const allowedMime = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp"]);
 
@@ -66,7 +67,7 @@ export async function fileRoutes(app) {
             : {}),
         }),
       );
-      return app.withTenant(request.auth, async (client) => {
+      return respondAfterCommit(app, request, reply, async (client) => {
         const result = await client.query(
           `INSERT INTO files
              (id, tenant_id, storage_key, original_name, content_type, byte_size, sha256,
@@ -92,7 +93,7 @@ export async function fileRoutes(app) {
           after: result.rows[0],
           request,
         });
-        return reply.code(201).send({ data: toPublicJson(result.rows[0]) });
+        return { statusCode: 201, body: { data: toPublicJson(result.rows[0]) } };
       });
     },
   );

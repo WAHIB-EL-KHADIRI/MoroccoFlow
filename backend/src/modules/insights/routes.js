@@ -1,5 +1,6 @@
 import { AppError, notFound } from "../../lib/errors.js";
 import { toPublicJson } from "../../lib/serialize.js";
+import { respondAfterCommit } from "../../lib/crud.js";
 
 export async function insightRoutes(app) {
   app.get(
@@ -175,7 +176,7 @@ export async function insightRoutes(app) {
       },
     },
     async (request, reply) =>
-      app.withTenant(request.auth, async (client) => {
+      respondAfterCommit(app, request, reply, async (client) => {
         const result = await client.query(
           `INSERT INTO notifications (tenant_id, user_id, type, title, detail)
            VALUES ($1, $2, $3, $4, $5) RETURNING *`,
@@ -189,7 +190,7 @@ export async function insightRoutes(app) {
         );
         if (!result.rowCount)
           throw new AppError("CREATE_FAILED", "Notification was not created", 500);
-        return reply.code(201).send({ data: toPublicJson(result.rows[0]) });
+        return { statusCode: 201, body: { data: toPublicJson(result.rows[0]) } };
       }),
   );
 }

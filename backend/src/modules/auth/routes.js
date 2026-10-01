@@ -14,6 +14,7 @@ import {
 import { AppError, conflict } from "../../lib/errors.js";
 import { toPublicJson } from "../../lib/serialize.js";
 import { rolePermissions } from "../../lib/rbac.js";
+import { respondAfterCommit } from "../../lib/crud.js";
 
 const REFRESH_COOKIE = "mf_refresh";
 const MAX_FAILURES = 5;
@@ -152,46 +153,53 @@ export async function authRoutes(app) {
       const passwordHash = await hashPassword(request.body.password);
       const auth = { tenantId, userId, role: "owner" };
 
-      return app.withTenant(auth, async (client) => {
-        try {
-          await client.query(
-            `INSERT INTO tenants (id, slug, name, legal_name, ice, city)
+      return respondAfterCommit(
+        app,
+        request,
+        reply,
+        async (client) => {
+          try {
+            await client.query(
+              `INSERT INTO tenants (id, slug, name, legal_name, ice, city)
              VALUES ($1, $2, $3, $4, $5, $6)`,
-            [
-              tenantId,
-              request.body.workspace,
-              request.body.companyName,
-              request.body.legalName || null,
-              request.body.ice || null,
-              request.body.city || null,
-            ],
-          );
-          await client.query(
-            `INSERT INTO users (id, tenant_id, email, password_hash, full_name, role)
+              [
+                tenantId,
+                request.body.workspace,
+                request.body.companyName,
+                request.body.legalName || null,
+                request.body.ice || null,
+                request.body.city || null,
+              ],
+            );
+            await client.query(
+              `INSERT INTO users (id, tenant_id, email, password_hash, full_name, role)
              VALUES ($1, $2, $3, $4, $5, 'owner')`,
-            [
-              userId,
-              tenantId,
-              normalizeEmail(request.body.email),
-              passwordHash,
-              request.body.ownerName,
-            ],
-          );
-        } catch (error) {
-          if (error.code === "23505") throw conflict("Workspace or email already exists");
-          throw error;
-        }
-        await app.writeAudit(client, auth, {
-          action: "tenant.bootstrapped",
-          entityType: "tenant",
-          entityId: tenantId,
-          after: { name: request.body.companyName, ownerUserId: userId },
-          request,
-        });
-        return reply
-          .code(201)
-          .send({ data: { tenantId, userId, workspace: request.body.workspace } });
-      });
+              [
+                userId,
+                tenantId,
+                normalizeEmail(request.body.email),
+                passwordHash,
+                request.body.ownerName,
+              ],
+            );
+          } catch (error) {
+            if (error.code === "23505") throw conflict("Workspace or email already exists");
+            throw error;
+          }
+          await app.writeAudit(client, auth, {
+            action: "tenant.bootstrapped",
+            entityType: "tenant",
+            entityId: tenantId,
+            after: { name: request.body.companyName, ownerUserId: userId },
+            request,
+          });
+          return {
+            statusCode: 201,
+            body: { data: { tenantId, userId, workspace: request.body.workspace } },
+          };
+        },
+        auth,
+      );
     },
   );
 
@@ -394,7 +402,7 @@ export async function authRoutes(app) {
       },
     },
     async (request, reply) =>
-      app.withTenant(request.auth, async (client) => {
+      respondAfterCommit(app, request, reply, async (client) => {
         const result = await client.query("SELECT mfa_secret_encrypted FROM users WHERE id = $1", [
           request.auth.userId,
         ]);
@@ -417,7 +425,7 @@ export async function authRoutes(app) {
           entityId: request.auth.userId,
           request,
         });
-        return reply.code(204).send();
+        return { statusCode: 204 };
       }),
   );
 
@@ -439,7 +447,7 @@ export async function authRoutes(app) {
       },
     },
     async (request, reply) =>
-      app.withTenant(request.auth, async (client) => {
+      respondAfterCommit(app, request, reply, async (client) => {
         const result = await client.query(
           "SELECT password_hash, mfa_secret_encrypted, mfa_enabled FROM users WHERE id = $1",
           [request.auth.userId],
@@ -472,7 +480,7 @@ export async function authRoutes(app) {
           entityId: request.auth.userId,
           request,
         });
-        return reply.code(204).send();
+        return { statusCode: 204 };
       }),
   );
   app.post(
