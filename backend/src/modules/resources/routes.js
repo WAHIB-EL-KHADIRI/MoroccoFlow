@@ -137,7 +137,7 @@ export async function resourceRoutes(app) {
     path: "/quotes",
     table: "quotes",
     entity: "quote",
-    permission: "finance",
+    permission: "quotes",
     required: ["clientId", "number", "issueDate"],
     searchColumns: ["number", "status"],
     fieldMap: {

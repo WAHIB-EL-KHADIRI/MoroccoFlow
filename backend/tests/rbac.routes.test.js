@@ -212,8 +212,18 @@ describe("role enforcement at the API, not at the button", () => {
     },
     {
       key: "POST /api/v1/quotes",
-      allow: ["owner", "admin", "finance"],
-      deny: ["project_manager", "hr", "sales"],
+      allow: ["owner", "admin", "finance", "sales"],
+      deny: ["project_manager", "hr"],
+    },
+    {
+      key: "PATCH /api/v1/quotes/:id",
+      allow: ["sales", "finance"],
+      deny: ["project_manager", "hr"],
+    },
+    {
+      key: "DELETE /api/v1/quotes/:id",
+      allow: ["sales"],
+      deny: ["project_manager", "hr"],
     },
     {
       key: "POST /api/v1/invoices",

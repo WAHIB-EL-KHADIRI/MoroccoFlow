@@ -5,6 +5,7 @@ export const rolePermissions = Object.freeze({
   admin: [
     "crm:*",
     "projects:*",
+    "quotes:*",
     "finance:*",
     "team:read",
     "team:write",
@@ -13,11 +14,18 @@ export const rolePermissions = Object.freeze({
     "settings:write",
     "files:*",
   ],
-  sales: ["crm:*", "projects:read", "finance:quotes", "reports:read", "files:read"],
-  project_manager: ["crm:read", "projects:*", "finance:read", "reports:read", "files:*"],
-  finance: ["crm:read", "projects:read", "finance:*", "reports:read", "files:*"],
+  sales: ["crm:*", "projects:read", "quotes:*", "reports:read", "files:read"],
+  project_manager: [
+    "crm:read",
+    "projects:*",
+    "quotes:read",
+    "finance:read",
+    "reports:read",
+    "files:*",
+  ],
+  finance: ["crm:read", "projects:read", "quotes:*", "finance:*", "reports:read", "files:*"],
   hr: ["team:*", "settings:read"],
-  viewer: ["crm:read", "projects:read", "finance:read", "reports:read", "team:read"],
+  viewer: ["crm:read", "projects:read", "quotes:read", "finance:read", "reports:read", "team:read"],
 });
 
 export function can(role, permission) {

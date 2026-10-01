@@ -19,6 +19,11 @@ describe("security primitives", () => {
     expect(can("finance", "finance:write")).toBe(true);
     expect(can("viewer", "finance:write")).toBe(false);
     expect(can("unknown", "crm:read")).toBe(false);
+    // Sales owns the quote step of the pipeline, but never sees invoices or expenses.
+    expect(can("sales", "quotes:write")).toBe(true);
+    expect(can("sales", "finance:read")).toBe(false);
+    expect(can("viewer", "quotes:read")).toBe(true);
+    expect(can("viewer", "quotes:write")).toBe(false);
   });
 
   it("hashes and verifies passwords with Argon2id", async () => {
