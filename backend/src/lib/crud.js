@@ -17,6 +17,17 @@ function buildColumns(fieldMap) {
   );
 }
 
+/**
+ * Runs `operation` in the tenant transaction and sends its `{ statusCode, body }`
+ * only once COMMIT has returned. Replying from inside the transaction told the
+ * client "created" before the row was visible to its next request, and before a
+ * failing COMMIT could turn that success into a lie.
+ */
+export async function respondAfterCommit(app, request, reply, operation) {
+  const { statusCode, body } = await app.withTenant(request.auth, operation);
+  return reply.code(statusCode).send(body ?? undefined);
+}
+
 export function registerCrudRoutes(app, config) {
   const {
     path,
@@ -28,6 +39,11 @@ export function registerCrudRoutes(app, config) {
     properties,
     searchColumns = [],
     defaults = {},
+    // Optional domain rules: a narrower body for creation, and guards that see the
+    // stored row before an update or delete and throw to refuse it.
+    createProperties = properties,
+    guardUpdate,
+    guardDelete,
   } = config;
   const tableName = safeIdentifier(table);
   const columns = buildColumns(fieldMap);
@@ -94,15 +110,15 @@ export function registerCrudRoutes(app, config) {
           type: "object",
           additionalProperties: false,
           required,
-          properties: { id: uuid, ...properties },
+          properties: { id: uuid, ...createProperties },
         },
         response: { 400: errorResponse, 401: errorResponse, 403: errorResponse },
       },
     },
     async (request, reply) =>
-      app.withTenant(request.auth, async (client) => {
+      respondAfterCommit(app, request, reply, async (client) => {
         const gate = await beginIdempotency(client, request.auth, request);
-        if (gate?.cached) return reply.code(gate.cached.statusCode).send(gate.cached.body);
+        if (gate?.cached) return gate.cached;
         const id = request.body.id || randomUUID();
         const input = { ...defaults, ...request.body };
         const provided = allowedFields.filter((field) => input[field] !== undefined);
@@ -123,7 +139,7 @@ export function registerCrudRoutes(app, config) {
         });
         const payload = { data: toPublicJson(result.rows[0]) };
         await completeIdempotency(client, request.auth, gate, 201, payload);
-        return reply.code(201).send(payload);
+        return { statusCode: 201, body: payload };
       }),
   );
 
@@ -149,9 +165,9 @@ export function registerCrudRoutes(app, config) {
       },
     },
     async (request, reply) =>
-      app.withTenant(request.auth, async (client) => {
+      respondAfterCommit(app, request, reply, async (client) => {
         const gate = await beginIdempotency(client, request.auth, request);
-        if (gate?.cached) return reply.code(gate.cached.statusCode).send(gate.cached.body);
+        if (gate?.cached) return gate.cached;
         const provided = allowedFields.filter((field) => request.body[field] !== undefined);
         if (!provided.length) throw new AppError("EMPTY_UPDATE", "No fields to update", 400);
         const before = await client.query(
@@ -159,6 +175,7 @@ export function registerCrudRoutes(app, config) {
           [request.params.id],
         );
         if (!before.rowCount) throw notFound(entity);
+        guardUpdate?.(before.rows[0], request.body);
 
         const values = provided.map((field) => request.body[field]);
         const assignments = provided.map((field, index) => `${columns[field]} = $${index + 1}`);
@@ -180,7 +197,7 @@ export function registerCrudRoutes(app, config) {
         });
         const payload = { data: toPublicJson(result.rows[0]) };
         await completeIdempotency(client, request.auth, gate, 200, payload);
-        return payload;
+        return { statusCode: 200, body: payload };
       }),
   );
 
@@ -205,9 +222,16 @@ export function registerCrudRoutes(app, config) {
       },
     },
     async (request, reply) =>
-      app.withTenant(request.auth, async (client) => {
+      respondAfterCommit(app, request, reply, async (client) => {
         const gate = await beginIdempotency(client, request.auth, request);
-        if (gate?.cached) return reply.code(gate.cached.statusCode).send(gate.cached.body);
+        if (gate?.cached) return gate.cached;
+        if (guardDelete) {
+          const stored = await client.query(
+            `SELECT * FROM ${tableName} WHERE id = $1 AND deleted_at IS NULL FOR UPDATE`,
+            [request.params.id],
+          );
+          if (stored.rowCount) guardDelete(stored.rows[0]);
+        }
         const result = await client.query(
           `UPDATE ${tableName} SET deleted_at = now()
            WHERE id = $1 AND version = $2 AND deleted_at IS NULL RETURNING *`,
@@ -228,7 +252,7 @@ export function registerCrudRoutes(app, config) {
           request,
         });
         await completeIdempotency(client, request.auth, gate, 204, null);
-        return reply.code(204).send();
+        return { statusCode: 204 };
       }),
   );
 }
