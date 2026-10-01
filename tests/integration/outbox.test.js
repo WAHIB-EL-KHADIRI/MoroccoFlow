@@ -179,6 +179,34 @@ describe("queued mutations", () => {
     expect(await database.pendingMutations()).toHaveLength(0);
   });
 
+  it("keeps creation order when several mutations share one millisecond", async () => {
+    // createdAt has millisecond precision and the outbox is keyed by a random UUID,
+    // so same-millisecond writes used to replay in UUID order. A frozen clock makes
+    // that collision certain instead of depending on how fast the machine is.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-03-01T10:00:00.000Z"));
+    try {
+      failMutations = true;
+      for (const number of ["FA-2026-920", "FA-2026-921", "FA-2026-922", "FA-2026-923"]) {
+        await appStore.save("invoices", {
+          clientId: "c1",
+          number,
+          amount: 1000,
+          status: "draft",
+          date: "2026-03-01T00:00:00.000Z",
+          dueDate: "2026-03-31T00:00:00.000Z",
+        });
+      }
+      calls = [];
+      failMutations = false;
+      await appStore.sync();
+      const sent = mutations().map((call) => JSON.parse(call.body).number);
+      expect(sent).toEqual(["FA-2026-920", "FA-2026-921", "FA-2026-922", "FA-2026-923"]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("stops at the first failure so a replay cannot reorder the queue", async () => {
     failMutations = true;
     await appStore.save("clients", {
