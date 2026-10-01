@@ -22,6 +22,22 @@ const syncableStores = new Set([
   "notifications",
 ]);
 
+/**
+ * Replay order for the outbox. createdAt has millisecond precision and the outbox is
+ * keyed by a random UUID, so two writes in the same millisecond used to replay in
+ * random order (an update could reach the server before its create). The sequence is
+ * microsecond-scaled wall time, bumped by one on a tie, so it keeps increasing within
+ * a page and stays above anything queued before a reload.
+ */
+let lastSequence = 0;
+function nextSequence() {
+  lastSequence = Math.max(Date.now() * 1000, lastSequence + 1);
+  return lastSequence;
+}
+
+// Mutations queued before `sequence` existed fall back to their timestamp.
+const replayOrder = (mutation) => mutation.sequence ?? Date.parse(mutation.createdAt) * 1000;
+
 class AppStore extends EventTarget {
   #syncPromise = null;
   #state = {
@@ -110,6 +126,7 @@ class AppStore extends EventTarget {
     if (apiEnabled && syncableStores.has(storeName)) {
       await enqueueMutation({
         mutationId: crypto.randomUUID(),
+        sequence: nextSequence(),
         storeName,
         action: "save",
         entity: record,
@@ -126,6 +143,7 @@ class AppStore extends EventTarget {
     if (apiEnabled && entity && syncableStores.has(storeName)) {
       await enqueueMutation({
         mutationId: crypto.randomUUID(),
+        sequence: nextSequence(),
         storeName,
         action: "delete",
         entity,
@@ -148,9 +166,7 @@ class AppStore extends EventTarget {
   async #runSync() {
     this.#set({ syncing: true, syncError: null });
     try {
-      const mutations = (await pendingMutations()).sort(
-        (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-      );
+      const mutations = (await pendingMutations()).sort((a, b) => replayOrder(a) - replayOrder(b));
       for (const mutation of mutations) {
         await apiClient.pushMutation(mutation);
         await removeMutation(mutation.mutationId);
