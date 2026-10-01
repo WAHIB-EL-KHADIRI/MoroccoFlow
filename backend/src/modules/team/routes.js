@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { createOpaqueToken, hashToken, normalizeEmail } from "../../lib/crypto.js";
 import { AppError, conflict } from "../../lib/errors.js";
 import { toPublicJson } from "../../lib/serialize.js";
+import { respondAfterCommit } from "../../lib/crud.js";
 
 const allowedRoles = ["admin", "sales", "project_manager", "finance", "hr", "viewer"];
 
@@ -40,7 +41,7 @@ export async function teamRoutes(app) {
       },
     },
     async (request, reply) =>
-      app.withTenant(request.auth, async (client) => {
+      respondAfterCommit(app, request, reply, async (client) => {
         const id = randomUUID();
         const token = createOpaqueToken();
         const email = normalizeEmail(request.body.email);
@@ -72,9 +73,10 @@ export async function teamRoutes(app) {
           after: result.rows[0],
           request,
         });
-        return reply.code(201).send({
-          data: { ...toPublicJson(result.rows[0]), invitationToken: token },
-        });
+        return {
+          statusCode: 201,
+          body: { data: { ...toPublicJson(result.rows[0]), invitationToken: token } },
+        };
       }),
   );
 

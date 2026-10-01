@@ -23,8 +23,8 @@ function buildColumns(fieldMap) {
  * client "created" before the row was visible to its next request, and before a
  * failing COMMIT could turn that success into a lie.
  */
-export async function respondAfterCommit(app, request, reply, operation) {
-  const { statusCode, body } = await app.withTenant(request.auth, operation);
+export async function respondAfterCommit(app, request, reply, operation, auth = request.auth) {
+  const { statusCode, body } = await app.withTenant(auth, operation);
   return reply.code(statusCode).send(body ?? undefined);
 }
 
