@@ -23,6 +23,26 @@ export function formatMoney(centimes = 0) {
   return moneyFormatters.get(locale).format(centimes / 100);
 }
 
+/**
+ * Parses a typed MAD amount ("1 250,5", "1250.50", "20000") into integer centimes
+ * from the digits themselves, never through a float. Returns null for anything that
+ * is not a non-negative amount with at most two decimals.
+ */
+export function parseMoney(input) {
+  const text = String(input ?? "")
+    .trim()
+    // Arabic-Indic and Persian digits, and the Arabic decimal/thousands separators,
+    // as typed on an Arabic keyboard.
+    .replace(/[\u0660-\u0669]/g, (digit) => String(digit.charCodeAt(0) - 0x0660))
+    .replace(/[\u06f0-\u06f9]/g, (digit) => String(digit.charCodeAt(0) - 0x06f0))
+    .replace(/[\s\u00a0\u202f\u066c]/g, "")
+    .replace(/[,\u066b]/, ".");
+  const match = /^(\d+)(?:\.(\d{0,2}))?$/.exec(text);
+  if (!match) return null;
+  const centimes = Number(match[1]) * 100 + Number((match[2] || "").padEnd(2, "0"));
+  return Number.isSafeInteger(centimes) ? centimes : null;
+}
+
 export function formatDate(date) {
   if (!date) return "-";
   const locale = localeCode();

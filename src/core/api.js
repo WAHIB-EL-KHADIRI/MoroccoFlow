@@ -160,6 +160,24 @@ function writableBody(store, entity, includeId) {
   return body;
 }
 
+/** Quotes are a server-side workflow: no offline outbox, no local copy. */
+export const quotesApi = {
+  async list({ q } = {}) {
+    const query = new URLSearchParams({ limit: "100" });
+    if (q) query.set("q", q);
+    const response = await request(`/quotes?${query}`, { raw: true });
+    return response?.data || [];
+  },
+  get: (id) => request(`/quotes/${id}`),
+  create: (body, key) =>
+    request("/quotes", { method: "POST", headers: { "idempotency-key": key }, body }),
+  update: (id, body) => request(`/quotes/${id}`, { method: "PATCH", body }),
+  // The key is minted once per dialog: a double click or a network retry replays the
+  // first answer instead of acting twice.
+  accept: (id, body, key) =>
+    request(`/quotes/${id}/accept`, { method: "POST", headers: { "idempotency-key": key }, body }),
+};
+
 export const apiClient = {
   async login(credentials) {
     const body = { ...credentials };

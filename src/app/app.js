@@ -8,6 +8,7 @@ import { toast } from "../design-system/components.js";
 const routes = {
   dashboard: () => import("../features/dashboard/index.js"),
   crm: () => import("../features/crm/index.js"),
+  quotes: () => import("../features/quotes/index.js"),
   projects: () => import("../features/projects/index.js"),
   finance: () => import("../features/finance/index.js"),
   reports: () => import("../features/reports/index.js"),
@@ -18,6 +19,7 @@ const routes = {
 const navItems = [
   ["dashboard", "dashboard"],
   ["crm", "users"],
+  ["quotes", "check"],
   ["projects", "projects"],
   ["finance", "finance"],
   ["reports", "reports"],
@@ -27,6 +29,7 @@ const navItems = [
 
 const routePermissions = {
   crm: "crm:read",
+  quotes: "quotes:read",
   projects: "projects:read",
   finance: "finance:read",
   reports: "reports:read",

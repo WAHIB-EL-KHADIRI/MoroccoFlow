@@ -822,6 +822,7 @@
   }
 
   mf-status-badge[data-status="paid"],
+  mf-status-badge[data-status="accepted"],
   mf-status-badge[data-status="active"],
   mf-status-badge[data-status="done"] {
     background: var(--success-soft);
@@ -829,12 +830,15 @@
   }
 
   mf-status-badge[data-status="overdue"],
+  mf-status-badge[data-status="rejected"],
   mf-status-badge[data-status="high"] {
     background: var(--danger-soft);
     color: var(--danger);
   }
 
   mf-status-badge[data-status="pending"],
+  mf-status-badge[data-status="sent"],
+  mf-status-badge[data-status="partial"],
   mf-status-badge[data-status="medium"],
   mf-status-badge[data-status="prospect"] {
     background: var(--saffron-soft);
@@ -845,6 +849,47 @@
   mf-status-badge[data-status="low"] {
     background: var(--blue-soft);
     color: var(--blue);
+  }
+
+  .link-button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .detail-list {
+    display: grid;
+    grid-template-columns: minmax(120px, max-content) 1fr;
+    gap: 8px 16px;
+    margin: 0 0 18px;
+  }
+
+  .detail-list dt {
+    color: var(--ink-500);
+  }
+
+  .detail-list dd {
+    margin: 0;
+  }
+
+  .accept-panel {
+    margin: 0 0 18px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-soft);
+  }
+
+  .form-error {
+    min-height: 1.2em;
+    margin: 8px 0 0;
+    color: var(--danger);
   }
 
   .kanban {
