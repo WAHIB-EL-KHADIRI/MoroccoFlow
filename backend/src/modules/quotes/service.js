@@ -1,5 +1,6 @@
 import { AppError, notFound } from "../../lib/errors.js";
 import { effectiveQuoteStatus, isOpen } from "./lifecycle.js";
+import { quoteLines } from "./lines.js";
 
 /**
  * Accepts a quote: marks it accepted, opens its project and records what the client
@@ -133,6 +134,7 @@ export async function quoteDetail(client, quoteId, { includeFinance }) {
   return {
     ...withoutDerived(quote),
     effectiveStatus: effectiveQuoteStatus(quote.status, quote.expired),
+    lines: await quoteLines(client, quoteId),
     project: project.rows[0] ?? null,
     obligation: obligation.rows[0] ?? null,
     history: history.rows,
