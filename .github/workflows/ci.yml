@@ -42,11 +42,12 @@ jobs:
       # Measurement step: reports coverage for both suites. Reported, not enforced yet, so
       # the first numbers can be read before thresholds are chosen (the frontend thresholds
       # in vite.config.js are checked here; the API has none).
-      - name: Coverage report
+      - name: Coverage report (frontend)
         continue-on-error: true
-        run: |
-          npm run test:coverage
-          npm run test --workspace @moroccoflow/api -- --coverage
+        run: npm run test:coverage
+      - name: Coverage report (API)
+        continue-on-error: true
+        run: npm run test --workspace @moroccoflow/api -- --coverage
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e -- --project=chromium
       - name: Upload Playwright report on failure
