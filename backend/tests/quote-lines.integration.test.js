@@ -240,6 +240,42 @@ suite("quote lines and VAT on PostgreSQL", () => {
     expect(response.statusCode).toBe(404);
   });
 
+  it("refuses a hand-written subtotal or tax once the quote has lines", async () => {
+    const quote = await createQuote();
+    await putLines("salesA", quote.id, [{ description: "X", quantity: "1", unitPriceCents: 1000 }]);
+    const version = (await storedQuote(quote.id)).version;
+
+    for (const patch of [{ subtotalCents: 1 }, { taxCents: 999_999 }]) {
+      const response = await api("salesA", "PATCH", `/quotes/${quote.id}`, { version, ...patch });
+      expect(response.statusCode, response.body).toBe(409);
+      expect(response.json().error.code).toBe("TOTALS_FROM_LINES");
+    }
+    const stored = await storedQuote(quote.id);
+    expect([Number(stored.subtotal_cents), Number(stored.tax_cents)]).toEqual([1000, 0]);
+  });
+
+  it("still lets other fields change on a quote that has lines", async () => {
+    const quote = await createQuote();
+    await putLines("salesA", quote.id, [{ description: "X", quantity: "1", unitPriceCents: 1000 }]);
+    const version = (await storedQuote(quote.id)).version;
+
+    const response = await api("salesA", "PATCH", `/quotes/${quote.id}`, { version, notes: "ok" });
+
+    expect(response.statusCode, response.body).toBe(200);
+  });
+
+  it("still allows manual totals on a quote without lines", async () => {
+    const quote = await createQuote();
+
+    const response = await api("salesA", "PATCH", `/quotes/${quote.id}`, {
+      version: quote.version,
+      subtotalCents: 5000,
+    });
+
+    expect(response.statusCode, response.body).toBe(200);
+    expect(Number((await storedQuote(quote.id)).subtotal_cents)).toBe(5000);
+  });
+
   it("writes an audit entry with the new totals", async () => {
     const quote = await createQuote();
     await putLines("salesA", quote.id, [

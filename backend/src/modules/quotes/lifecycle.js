@@ -48,3 +48,23 @@ export function assertQuoteDeletable(before) {
 export function effectiveQuoteStatus(status, expired) {
   return isOpen(status) && expired ? "expired" : status;
 }
+
+/**
+ * assertQuoteUpdate plus one rule: once a quote has line items, its subtotal and VAT are
+ * derived from them (PUT /quotes/:id/lines) and cannot be overwritten by hand, which
+ * would leave the totals disagreeing with the lines the client sees.
+ */
+export async function assertQuoteUpdateWithLines(before, patch, client) {
+  assertQuoteUpdate(before, patch);
+  if (patch.subtotalCents === undefined && patch.taxCents === undefined) return;
+  const lines = await client.query("SELECT 1 FROM line_items WHERE quote_id = $1 LIMIT 1", [
+    before.id,
+  ]);
+  if (lines.rowCount) {
+    throw new AppError(
+      "TOTALS_FROM_LINES",
+      "This quote has line items; change its totals by replacing the lines",
+      409,
+    );
+  }
+}

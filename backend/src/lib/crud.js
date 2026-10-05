@@ -40,7 +40,8 @@ export function registerCrudRoutes(app, config) {
     searchColumns = [],
     defaults = {},
     // Optional domain rules: a narrower body for creation, and guards that see the
-    // stored row before an update or delete and throw to refuse it.
+    // stored row before an update or delete and throw to refuse it. guardUpdate may be
+    // async and also receives the tenant-scoped client for lookups.
     createProperties = properties,
     guardUpdate,
     guardDelete,
@@ -175,7 +176,7 @@ export function registerCrudRoutes(app, config) {
           [request.params.id],
         );
         if (!before.rowCount) throw notFound(entity);
-        guardUpdate?.(before.rows[0], request.body);
+        await guardUpdate?.(before.rows[0], request.body, client);
 
         const values = provided.map((field) => request.body[field]);
         const assignments = provided.map((field, index) => `${columns[field]} = $${index + 1}`);
