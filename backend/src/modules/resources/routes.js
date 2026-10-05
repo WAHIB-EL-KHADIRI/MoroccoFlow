@@ -1,7 +1,7 @@
 import { registerCrudRoutes } from "../../lib/crud.js";
 import {
   assertQuoteDeletable,
-  assertQuoteUpdate,
+  assertQuoteUpdateWithLines,
   CREATABLE_QUOTE_STATUSES,
   WRITABLE_QUOTE_STATUSES,
 } from "../quotes/lifecycle.js";
@@ -167,7 +167,7 @@ export async function resourceRoutes(app) {
       status: { type: "string", enum: CREATABLE_QUOTE_STATUSES },
       validUntil: nullableDate,
     },
-    guardUpdate: assertQuoteUpdate,
+    guardUpdate: assertQuoteUpdateWithLines,
     guardDelete: assertQuoteDeletable,
   });
 
