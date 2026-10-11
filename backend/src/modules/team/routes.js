@@ -3,8 +3,12 @@ import { createOpaqueToken, hashToken, normalizeEmail } from "../../lib/crypto.j
 import { AppError, conflict } from "../../lib/errors.js";
 import { toPublicJson } from "../../lib/serialize.js";
 import { respondAfterCommit } from "../../lib/crud.js";
+import { canAssignRole } from "../../lib/rbac.js";
 
 const allowedRoles = ["admin", "sales", "project_manager", "finance", "hr", "viewer"];
+
+const roleEscalation = () =>
+  new AppError("ROLE_ESCALATION", "You cannot grant or change a role above your own permissions", 403);
 
 export async function teamRoutes(app) {
   app.get(
@@ -42,6 +46,7 @@ export async function teamRoutes(app) {
     },
     async (request, reply) =>
       respondAfterCommit(app, request, reply, async (client) => {
+        if (!canAssignRole(request.auth.role, request.body.role)) throw roleEscalation();
         const id = randomUUID();
         const token = createOpaqueToken();
         const email = normalizeEmail(request.body.email);
@@ -119,6 +124,18 @@ export async function teamRoutes(app) {
       return app.withTenant(request.auth, async (client) => {
         const entries = Object.entries(request.body).filter(([key]) => key !== "version");
         if (!entries.length) throw new AppError("EMPTY_UPDATE", "No fields to update", 400);
+        // The actor must be able to hold both the account's current role and the new one;
+        // this also stops anyone but the owner from demoting or archiving the owner.
+        const current = await client.query("SELECT role FROM users WHERE id = $1 FOR UPDATE", [
+          request.params.id,
+        ]);
+        if (!current.rowCount) throw conflict("Member not found or changed by another user");
+        if (
+          !canAssignRole(request.auth.role, current.rows[0].role) ||
+          (request.body.role && !canAssignRole(request.auth.role, request.body.role))
+        ) {
+          throw roleEscalation();
+        }
         const map = { role: "role", department: "department", status: "status" };
         const values = entries.map(([, value]) => value);
         const sets = entries.map(([key], index) => `${map[key]} = $${index + 1}`);
