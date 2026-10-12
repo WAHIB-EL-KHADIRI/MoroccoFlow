@@ -18,6 +18,8 @@ export function safeUrl(value = "") {
 
 export function csvCell(value = "") {
   const string = String(value);
-  const safe = /^[=+\-@]/.test(string) ? `'${string}` : string;
+  // Same set as the API's finance export: spreadsheets also start a formula after a
+  // leading tab or carriage return, which the old pattern let through.
+  const safe = /^[=+\-@\t\r]/.test(string) ? `'${string}` : string;
   return `"${safe.replaceAll('"', '""')}"`;
 }
