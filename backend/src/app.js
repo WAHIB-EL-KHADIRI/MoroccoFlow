@@ -27,7 +27,8 @@ import { teamRoutes } from "./modules/team/routes.js";
 function corsOrigin(config) {
   return (origin, callback) => {
     if (!origin || config.corsOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error("Origin is not allowed"), false);
+    // An AppError so the error handler answers 403, not a 500 logged as an unhandled error.
+    return callback(new AppError("INVALID_ORIGIN", "Request origin is not allowed", 403), false);
   };
 }
 

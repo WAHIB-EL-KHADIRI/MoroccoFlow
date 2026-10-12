@@ -115,6 +115,21 @@ export async function authRoutes(app) {
 
   const dummyHash = await hashPassword("MoroccoFlow-Dummy-Password-2026!");
 
+  /** Counts one failed sign-in attempt and locks the account at MAX_FAILURES. */
+  const recordLoginFailure = (account) =>
+    app.withTenant(
+      { tenantId: account.tenant_id, userId: account.user_id, role: account.role },
+      async (client) => {
+        await client.query(
+          `UPDATE users SET failed_login_count = failed_login_count + 1,
+             locked_until = CASE WHEN failed_login_count + 1 >= $2
+               THEN now() + make_interval(mins => $3) ELSE locked_until END
+           WHERE id = $1`,
+          [account.user_id, MAX_FAILURES, LOCK_MINUTES],
+        );
+      },
+    );
+
   app.post(
     "/bootstrap",
     {
@@ -222,20 +237,7 @@ export async function authRoutes(app) {
         ? await verifyPassword(account.password_hash, request.body.password)
         : await verifyPassword(dummyHash, request.body.password);
       if (!account || !valid || account.status !== "active") {
-        if (account) {
-          await app.withTenant(
-            { tenantId: account.tenant_id, userId: account.user_id, role: account.role },
-            async (client) => {
-              await client.query(
-                `UPDATE users SET failed_login_count = failed_login_count + 1,
-                   locked_until = CASE WHEN failed_login_count + 1 >= $2
-                     THEN now() + make_interval(mins => $3) ELSE locked_until END
-                 WHERE id = $1`,
-                [account.user_id, MAX_FAILURES, LOCK_MINUTES],
-              );
-            },
-          );
-        }
+        if (account) await recordLoginFailure(account);
         throw new AppError("INVALID_CREDENTIALS", "Workspace, email or password is incorrect", 401);
       }
       if (account.locked_until && new Date(account.locked_until) > new Date()) {
@@ -258,6 +260,9 @@ export async function authRoutes(app) {
           mfaValid = false;
         }
         if (!mfaValid) {
+          // A wrong code counts like a wrong password. Without this, anyone holding the
+          // password could guess the six-digit code with no lockout, only the rate limit.
+          await recordLoginFailure(account);
           throw new AppError(
             "MFA_REQUIRED",
             "A valid six-digit authentication code is required",
@@ -391,6 +396,7 @@ export async function authRoutes(app) {
     "/mfa/confirm",
     {
       preHandler: app.authenticate,
+      config: { rateLimit: { max: 10, timeWindow: "15 minutes" } },
       schema: {
         tags: ["Auth"],
         body: {
@@ -433,6 +439,7 @@ export async function authRoutes(app) {
     "/mfa/disable",
     {
       preHandler: app.authenticate,
+      config: { rateLimit: { max: 10, timeWindow: "15 minutes" } },
       schema: {
         tags: ["Auth"],
         body: {

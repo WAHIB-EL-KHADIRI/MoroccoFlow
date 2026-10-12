@@ -31,8 +31,8 @@ describe("HTTP perimeter", () => {
       url: "/health/live",
       headers: { origin: "https://attacker.invalid" },
     });
-    expect(response.statusCode).toBe(500);
-    expect(response.json().error.code).toBe("INTERNAL_ERROR");
+    expect(response.statusCode).toBe(403);
+    expect(response.json().error.code).toBe("INVALID_ORIGIN");
   });
 });
 
