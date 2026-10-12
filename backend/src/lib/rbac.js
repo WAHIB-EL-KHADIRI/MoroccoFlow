@@ -35,6 +35,30 @@ export function can(role, permission) {
   return grants.includes(`${namespace}:*`);
 }
 
+/**
+ * Whether `actorRole` may grant `targetRole` to someone, or change an account that holds it.
+ * A role can only be handed out by someone who already has every permission it carries,
+ * otherwise a role with team:write (hr) could mint an admin and reach CRM and finance.
+ * Only the owner can grant or touch the owner-level "*" grant.
+ *
+ * A wildcard grant "ns:*" is covered by "ns:*" itself or by both "ns:read" and "ns:write",
+ * the only two actions the permission table uses.
+ */
+export function canAssignRole(actorRole, targetRole) {
+  if (actorRole === "owner") return true;
+  const target = rolePermissions[targetRole];
+  if (!target) return false;
+  return target.every((grant) => {
+    if (grant === "*") return false;
+    if (!grant.endsWith(":*")) return can(actorRole, grant);
+    const namespace = grant.slice(0, -2);
+    return (
+      can(actorRole, grant) ||
+      (can(actorRole, `${namespace}:read`) && can(actorRole, `${namespace}:write`))
+    );
+  });
+}
+
 export function assertPermission(role, permission) {
   if (!can(role, permission)) throw forbidden();
 }
