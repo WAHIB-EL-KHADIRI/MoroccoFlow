@@ -42,8 +42,10 @@ jobs:
       # Measurement step: reports coverage for both suites. Reported, not enforced yet, so
       # the first numbers can be read before thresholds are chosen (the frontend thresholds
       # in vite.config.js are checked here; the API has none).
-      - name: Coverage report (frontend)
-        continue-on-error: true
+      # Thresholds live in vite.config.js (80 statements / 75 branches / 70 functions / 80
+      # lines). Measured 84.1 / 77.5 / 79.5 / 87.2 once the UI helpers and API client were
+      # tested, so the step now fails the build instead of only reporting.
+      - name: Coverage (frontend, thresholds enforced)
         run: npm run test:coverage
       - name: Coverage (API, thresholds enforced)
         run: npm run test --workspace @moroccoflow/api -- --coverage
