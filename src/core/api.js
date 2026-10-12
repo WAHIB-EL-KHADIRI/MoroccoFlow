@@ -2,6 +2,7 @@ const configuredBase = import.meta.env.VITE_API_BASE_URL?.trim();
 export const apiEnabled = Boolean(configuredBase);
 const apiBase = configuredBase?.replace(/\/$/, "") || "";
 let accessToken = null;
+let refreshInFlight = null;
 
 export class ApiError extends Error {
   constructor(message, status, code, details) {
@@ -187,10 +188,19 @@ export const apiClient = {
     return data;
   },
 
-  async refresh() {
-    const data = await request("/auth/refresh", { method: "POST" }, false);
-    accessToken = data.accessToken;
-    return data;
+  // Refresh tokens rotate and a reused one is rejected, so simultaneous 401s (pullWorkspace
+  // fires eight requests at once) must share one refresh. A second /auth/refresh with the
+  // already-rotated cookie would fail and sign the user out.
+  refresh() {
+    refreshInFlight ??= request("/auth/refresh", { method: "POST" }, false)
+      .then((data) => {
+        accessToken = data.accessToken;
+        return data;
+      })
+      .finally(() => {
+        refreshInFlight = null;
+      });
+    return refreshInFlight;
   },
 
   async logout() {
