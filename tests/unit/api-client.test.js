@@ -3,7 +3,7 @@
  * error mapping, workspace pull, and how local mutations become API calls. The server is
  * the authority; this pins what the client sends and how it reacts to what comes back.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 const BASE = "https://api.example.test/api/v1";
 
