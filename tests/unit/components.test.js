@@ -173,8 +173,8 @@ describe("<mf-chart>", () => {
     const { callback } = config.options.scales.y.ticks;
 
     expect(label({ raw: 0 })).toBe("0 dh");
-    // The currency symbol depends on the ICU build; the grouped number does not.
-    expect(label({ raw: 1500 })).toMatch(/^1\s?500/);
+    // Separator and currency symbol depend on the locale data (fr-MA gives "1.500,00MAD").
+    expect(label({ raw: 1500 })).toMatch(/^1\D?500/);
     expect(label({ raw: 1500 })).not.toMatch(/NaN/);
     expect(callback(12000)).toBe("12k");
   });
