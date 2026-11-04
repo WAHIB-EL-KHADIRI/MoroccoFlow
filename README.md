@@ -19,7 +19,7 @@ demo data is fictional.
 
 ![MoroccoFlow dashboard](docs/screenshots/dashboard-light.png)
 
-There is no hosted demo while this repository is private. Portfolio mode runs locally with no
+There is no hosted demo. Portfolio mode runs locally with no
 server and no sign-up — see [Quick start](#quick-start-portfolio-mode). It seeds fictional data,
 and language and direction switch from the header, so the Arabic RTL layout is reachable there.
 
