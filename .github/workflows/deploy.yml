@@ -39,6 +39,11 @@ jobs:
       - run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
+      # sourcemap: "hidden" removes the pointer from each bundle, but the maps
+      # still land in dist. Uploaded, they sit at a guessable URL (bundle name
+      # plus .map) with the original source inside.
+      - name: Keep source maps off the public site
+        run: find dist -name '*.map' -delete
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
