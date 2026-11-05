@@ -19,9 +19,10 @@ demo data is fictional.
 
 ![MoroccoFlow dashboard](docs/screenshots/dashboard-light.png)
 
-There is no hosted demo. Portfolio mode runs locally with no
-server and no sign-up — see [Quick start](#quick-start-portfolio-mode). It seeds fictional data,
-and language and direction switch from the header, so the Arabic RTL layout is reachable there.
+**[Try the live demo](https://wahib-el-khadiri.github.io/MoroccoFlow/)**: portfolio mode on GitHub Pages, with no server and no
+sign-up. It seeds fictional data in your browser, and language and direction switch from the
+header, so the Arabic RTL layout is one click away. To run it locally, see
+[Quick start](#quick-start-portfolio-mode).
 
 ## What it includes
 
